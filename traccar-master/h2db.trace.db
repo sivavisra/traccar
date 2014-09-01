@@ -1,0 +1,48 @@
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
+08-27 16:10:27 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLException: Table "DEVICES" not found; SQL statement:
+
+        SELECT id, uniqueId as imei
+        FROM devices;
+     [42102-176]
