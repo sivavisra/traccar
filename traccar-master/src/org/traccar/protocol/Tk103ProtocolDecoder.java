@@ -40,7 +40,7 @@ public class Tk103ProtocolDecoder extends BaseProtocolDecoder {
             ChannelHandlerContext ctx, Channel channel, Object msg)
             throws Exception {
     	
-    	String dataStr = (String)msg;
+    	String dataStr = (String)msg + ")";
     	
     	//String dataStr = "(07867085729.BP0500007867085729.140827A1631.4287N08046.8912E035.716122856.19000000000L005A81CC)";
     	Matcher matcher = Tk103ProtocolDecoder.pattern.matcher(dataStr);
