@@ -15,10 +15,12 @@
  */
 package org.traccar.protocol;
 
+import java.sql.Time;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.traccar.BaseProtocolDecoder;
@@ -26,15 +28,17 @@ import org.traccar.ServerManager;
 import org.traccar.helper.Log;
 import org.traccar.model.ExtendedInfoFormatter;
 import org.traccar.model.Position;
+import org.traccar.model.Track;
+import org.traccar.util.TraccarUtil;
 
 public class T55ProtocolDecoder extends BaseProtocolDecoder {
 
-    private Long deviceId;
+    private String deviceIMEIId;
 
     public T55ProtocolDecoder(ServerManager serverManager) {
         super(serverManager);
     }
-
+//$GPRMC,103140.136,A,1058.8808,N,07703.3397,E,0.00,0.00,030914,,*06
     private static final Pattern patternGPRMC = Pattern.compile(
             "\\$GPRMC," +
             "(\\d{2})(\\d{2})(\\d{2})\\.?\\d*," + // Time (HHMMSS.SSS)
@@ -81,12 +85,8 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             "(\\d+\\.?\\d*)," +            // Battery
             ".+");
     
-    private void identify(String id) {
-        try {
-            deviceId = getDataManager().getDeviceByImei(id).getId();
-        } catch(Exception error) {
-            Log.warning("Unknown device - " + id);
-        }
+    private void identify(String id) {                   
+    	deviceIMEIId = id;        
     }
     
     @Override
@@ -95,6 +95,8 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             throws Exception {
 
         String sentence = (String) msg;
+        
+        Log.info("t55 msg recived:"+sentence);
         
         if (!sentence.startsWith("$") && sentence.contains("$")) {
             int index = sentence.indexOf("$");
@@ -123,7 +125,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
         }
 
         // Location
-        else if (sentence.startsWith("$GPRMC") && deviceId != null) {
+        else if (sentence.startsWith("$GPRMC") && deviceIMEIId != null) {
 
             // Send response
             if (channel != null) {
@@ -136,11 +138,12 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
                 return null;
             }
 
-            // Create new position
-            Position position = new Position();
-            ExtendedInfoFormatter extendedInfo = new ExtendedInfoFormatter("t55");
-            position.setDeviceId(deviceId);
-
+            // Create new Track            
+            Track track = new Track();
+            //$GPRMC,103140.136,A,1058.8808,N,07703.3397,E,0.00,0.00,030914,,*06
+            track.setDeviceIMEI(deviceIMEIId);
+            track.setTrackerID("");
+            
             Integer index = 1;
 
             // Time
@@ -149,53 +152,52 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             time.set(Calendar.HOUR_OF_DAY, Integer.valueOf(parser.group(index++)));
             time.set(Calendar.MINUTE, Integer.valueOf(parser.group(index++)));
             time.set(Calendar.SECOND, Integer.valueOf(parser.group(index++)));
-
-            // Validity
-            position.setValid(parser.group(index++).compareTo("A") == 0);
+          
+            // status
+            track.setStatus(parser.group(index++));
 
             // Latitude
             Double latitude = Double.valueOf(parser.group(index++));
             latitude += Double.valueOf(parser.group(index++)) / 60;
             if (parser.group(index++).compareTo("S") == 0) latitude = -latitude;
-            position.setLatitude(latitude);
+            track.setLatitude(TraccarUtil.roundTo5DecimalValue(latitude));
 
             // Longitude
             Double longitude = Double.valueOf(parser.group(index++));
             longitude += Double.valueOf(parser.group(index++)) / 60;
             if (parser.group(index++).compareTo("W") == 0) longitude = -longitude;
-            position.setLongitude(longitude);
+            track.setLongitude(TraccarUtil.roundTo5DecimalValue(longitude));
 
             // Speed
             String speed = parser.group(index++);
             if (speed != null) {
-                position.setSpeed(Double.valueOf(speed));
+                track.setSpeed(Double.valueOf(speed));
             } else {
-                position.setSpeed(0.0);
+            	track.setSpeed(0.0);
             }
 
-            // Course
+            // Direction
             String course = parser.group(index++);
             if (course != null) {
-                position.setCourse(Double.valueOf(course));
+                track.setDirection(Double.valueOf(course));
             } else {
-                position.setCourse(0.0);
+            	track.setDirection(0.0);
             }
 
             // Date
             time.set(Calendar.DAY_OF_MONTH, Integer.valueOf(parser.group(index++)));
             time.set(Calendar.MONTH, Integer.valueOf(parser.group(index++)) - 1);
             time.set(Calendar.YEAR, 2000 + Integer.valueOf(parser.group(index++)));
-            position.setTime(time.getTime());
-
-            // Altitude
-            position.setAltitude(0.0);
-
-            position.setExtendedInfo(extendedInfo.toString());
-            return position;
+                        
+            track.setDate(new java.sql.Date(time.getTime().getTime()));
+            track.setTime(new Time(time.getTime().getTime()));
+                        
+            Log.info("t55 track:"+track.toString());
+            return track;
         }
 
         // Location
-        else if (sentence.startsWith("$GPGGA") && deviceId != null) {
+        else if (sentence.startsWith("$GPGGA") && deviceIMEIId != null) {
 
             // Parse message
             Matcher parser = patternGPGGA.matcher(sentence);
@@ -206,7 +208,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             // Create new position
             Position position = new Position();
             ExtendedInfoFormatter extendedInfo = new ExtendedInfoFormatter("t55");
-            position.setDeviceId(deviceId);
+            //position.setDeviceId(deviceId);
 
             Integer index = 1;
 
@@ -247,7 +249,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
         }
 
         // Location
-        else if (sentence.startsWith("$GPRMA") && deviceId != null) {
+        else if (sentence.startsWith("$GPRMA") && deviceIMEIId != null) {
 
             // Parse message
             Matcher parser = patternGPRMA.matcher(sentence);
@@ -258,7 +260,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             // Create new position
             Position position = new Position();
             ExtendedInfoFormatter extendedInfo = new ExtendedInfoFormatter("t55");
-            position.setDeviceId(deviceId);
+           // position.setDeviceId(deviceId);
 
             Integer index = 1;
 
@@ -304,7 +306,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
         }
 
         // Location
-        else if (sentence.startsWith("$TRCCR") && deviceId != null) {
+        else if (sentence.startsWith("$TRCCR") && deviceIMEIId != null) {
 
             // Parse message
             Matcher parser = patternTRCCR.matcher(sentence);
@@ -315,7 +317,7 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
             // Create new position
             Position position = new Position();
             ExtendedInfoFormatter extendedInfo = new ExtendedInfoFormatter("t55");
-            position.setDeviceId(deviceId);
+           // position.setDeviceId(deviceId);
 
             Integer index = 1;
 
@@ -348,6 +350,19 @@ public class T55ProtocolDecoder extends BaseProtocolDecoder {
         }
 
         return null;
+    }
+    
+    public static void main(String [] args)
+    {
+
+         try {
+			//new T55ProtocolDecoder(null).decode(null, null, "$GPRMC,052101.460,A,1058.8818,N,07703.3430,E,0.00,0.00,030914,,*0b");
+        	 new T55ProtocolDecoder(null).decode(null, null, "$PGID,355803056694324*03");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+     
     }
 
 }

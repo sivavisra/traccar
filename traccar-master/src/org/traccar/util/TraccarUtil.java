@@ -17,4 +17,20 @@ public class TraccarUtil {
 		return ((sign.equals("W")) || (sign.equals("S")) ? "-" : "")
 				+ df.format(valToRet);
 	}
+	
+	public static String roundTo5DecimalValue(Double sourceVal) {
+					 
+		DecimalFormat df = new DecimalFormat("###.#####");
+				
+		return df.format(Math.round(sourceVal*100000.0)/100000.0); 
+	}
+	
+	public static void main(String [] args)
+    {
+
+		System.out.println(roundTo5DecimalValue(77.05578833333334));
+     
+    }
+	
+	
 }
