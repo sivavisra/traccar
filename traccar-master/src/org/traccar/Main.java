@@ -25,7 +25,7 @@ public class Main {
 
         final ServerManager service = new ServerManager();
         service.init(args);
-
+//siva
         Log.info("Starting server...");
         Log.logSystemInfo();
 
